@@ -1,74 +1,77 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:flutter_application_1/services/auth_service.dart';
 import 'package:flutter_application_1/theme/app_theme.dart';
 import 'package:flutter_application_1/routes/app_routes.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  int _currentIndex = 0;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Meu Banco'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.exit_to_app),
-            onPressed: () async {
-              final authService = Provider.of<AuthService>(context, listen: false);
-              await authService.logout();
-              if (context.mounted) {
-                Navigator.pushReplacementNamed(context, AppRoutes.login);
-              }
-            },
-          ),
-        ],
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Account balance card
-            _buildBalanceCard(context),
-            const SizedBox(height: 24),
-            
-            // Quick actions
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Text(
-                'Ações rápidas',
-                style: Theme.of(context).textTheme.displayMedium,
-              ),
-            ),
-            const SizedBox(height: 16),
-            _buildQuickActions(context),
-            const SizedBox(height: 24),
-            
-            // Recent transactions
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Últimas transações',
-                    style: Theme.of(context).textTheme.displayMedium,
+      body: IndexedStack(
+        index: _currentIndex,
+        children: [
+          // Tela inicial
+          SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Account balance card
+                _buildBalanceCard(context),
+                const SizedBox(height: 24),
+                  
+                  // Quick actions
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Text(
+                      'Ações rápidas',
+                      style: Theme.of(context).textTheme.displayMedium,
+                    ),
                   ),
-                  TextButton(
-                    onPressed: () {
-                      // TODO: Navigate to full transaction history
-                    },
-                    child: const Text('Ver todas'),
+                  const SizedBox(height: 16),
+                  _buildQuickActions(context),
+                  const SizedBox(height: 24),
+                  
+                  // Recent transactions
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Últimas transações',
+                          style: Theme.of(context).textTheme.displayMedium,
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            // TODO: Navegar para o histórico completo
+                          },
+                          child: const Text('Ver todas'),
+                        ),
+                      ],
+                    ),
                   ),
+                  _buildRecentTransactions(),
                 ],
               ),
-            ),
-            _buildRecentTransactions(),
-          ],
-        ),
+          ),
+          // Outras telas podem ser adicionadas aqui
+          const Center(child: Text('Cartões')),
+          const Center(child: Text('Pix')),
+          const Center(child: Text('Investir')),
+        ],
       ),
-      bottomNavigationBar: _buildBottomNavigationBar(context, 0),
+      bottomNavigationBar: _buildBottomNavigationBar(context, _currentIndex),
     );
   }
 
@@ -334,15 +337,13 @@ class HomeScreen extends StatelessWidget {
         ),
       ],
       onTap: (index) {
-        // Handle bottom navigation tap
-        if (index == 1) {
-          // Navigate to Cards
-        } else if (index == 2) {
-          // Navigate to Pix
-        } else if (index == 3) {
-          // Navigate to Investments
-        } else if (index == 4) {
-          // Open menu
+        if (index == 4) {
+          // Navegar para a tela de configurações
+          Navigator.pushNamed(context, AppRoutes.settings);
+        } else {
+          setState(() {
+            _currentIndex = index;
+          });
         }
       },
     );
