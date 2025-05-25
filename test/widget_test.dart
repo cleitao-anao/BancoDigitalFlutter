@@ -16,12 +16,11 @@ class MockAuthService extends AuthService {
   bool _isLoggedIn = false;
 
   @override
-  Future<bool> isLoggedIn() async => _isLoggedIn;
+  bool get isLoggedIn => _isLoggedIn;
 
   @override
-  Future<bool> login(String email, String password) async {
+  Future<void> login(String email, String password) async {
     _isLoggedIn = true;
-    return true;
   }
 }
 
@@ -42,7 +41,7 @@ void main() {
           ),
         ],
         child: const MaterialApp(
-          home: MyApp(isLoggedIn: false),
+          home: MyApp(),
         ),
       ),
     );
@@ -69,7 +68,7 @@ void main() {
           ),
         ],
         child: const MaterialApp(
-          home: MyApp(isLoggedIn: false),
+          home: MyApp(),
         ),
       ),
     );

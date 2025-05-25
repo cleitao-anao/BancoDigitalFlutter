@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_application_1/routes/app_routes.dart';
 import 'package:flutter_application_1/services/auth_service.dart';
 import 'package:flutter_application_1/theme/app_theme.dart';
+import 'package:flutter_application_1/widgets/supabase_test_widget.dart';
+import 'package:flutter_application_1/screens/signup_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -21,9 +22,6 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void initState() {
     super.initState();
-    // Pre-fill with demo credentials for testing
-    _emailController.text = 'user@example.com';
-    _passwordController.text = 'password';
   }
 
   @override
@@ -43,23 +41,16 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       final authService = Provider.of<AuthService>(context, listen: false);
-      final success = await authService.login(
+      await authService.login(
         _emailController.text.trim(),
         _passwordController.text,
       );
-
       if (mounted) {
-        if (success) {
-          Navigator.pushReplacementNamed(context, AppRoutes.home);
-        } else {
-          setState(() {
-            _errorMessage = 'Email ou senha inválidos';
-          });
-        }
+        Navigator.pushReplacementNamed(context, '/home');
       }
     } catch (e) {
       setState(() {
-        _errorMessage = 'Ocorreu um erro. Tente novamente mais tarde.';
+        _errorMessage = e.toString();
       });
     } finally {
       if (mounted) {
@@ -167,30 +158,52 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 24),
                 
                 // Login button
-                ElevatedButton(
-                  onPressed: _isLoading ? null : _login,
-                  child: _isLoading
-                      ? const SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _login,
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: _isLoading
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          )
+                        : const Text(
+                            'Entrar',
+                            style: TextStyle(fontSize: 16),
                           ),
-                        )
-                      : const Text('ENTRAR'),
+                  ),
                 ),
-                const SizedBox(height: 16),
+                
+                const SizedBox(height: 20),
+                // Widget de teste do Supabase
+                const SupabaseTestWidget(),
                 
                 // Register
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text('Não tem uma conta?'),
+                    const Text('Não tem uma conta? '),
                     TextButton(
-                      onPressed: () {
-                        // TODO: Implement register navigation
-                      },
+                      onPressed: _isLoading
+                          ? null
+                          : () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const SignUpScreen(),
+                                ),
+                              );
+                            },
                       child: const Text('Cadastre-se'),
                     ),
                   ],
