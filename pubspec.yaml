@@ -40,11 +40,12 @@ dependencies:
   url_launcher: ^6.2.2
   connectivity_plus: ^6.1.4
   
+  
   # Supabase
   supabase_flutter: ^2.9.0
   
   # Autenticação
-  sign_in_with_apple: ^5.0.0
+  sign_in_with_apple: ^7.0.1
   
   # Gerenciamento de estado
   flutter_riverpod: ^2.4.9
