@@ -150,13 +150,23 @@ class _HomeScreenState extends State<HomeScreen> {
       {
         'icon': Icons.pix,
         'label': 'Pix',
+        'color': const Color(0xFF7B1FA2),
+        'gradient': [
+          const Color(0xFF9C27B0),
+          const Color(0xFF7B1FA2),
+        ],
         'onTap': () {
-          // TODO: Navigate to Pix screen
+          // TODO: Navegar para tela do Pix
         },
       },
       {
         'icon': Icons.swap_horiz,
         'label': 'Transferir',
+        'color': const Color(0xFF2196F3),
+        'gradient': [
+          const Color(0xFF42A5F5),
+          const Color(0xFF1976D2),
+        ],
         'onTap': () {
           Navigator.pushNamed(context, AppRoutes.transfer);
         },
@@ -164,20 +174,35 @@ class _HomeScreenState extends State<HomeScreen> {
       {
         'icon': Icons.attach_money,
         'label': 'Pagar',
+        'color': const Color(0xFF4CAF50),
+        'gradient': [
+          const Color(0xFF66BB6A),
+          const Color(0xFF388E3C),
+        ],
         'onTap': () {
-          // TODO: Navigate to payment screen
+          // TODO: Navegar para tela de pagamento
         },
       },
       {
         'icon': Icons.bar_chart,
         'label': 'Investir',
+        'color': const Color(0xFFFF9800),
+        'gradient': [
+          const Color(0xFFFFA726),
+          const Color(0xFFF57C00),
+        ],
         'onTap': () {
-          // TODO: Navigate to investments
+          // TODO: Navegar para investimentos
         },
       },
       {
         'icon': Icons.currency_exchange,
         'label': 'Câmbio',
+        'color': const Color(0xFF00BCD4),
+        'gradient': [
+          const Color(0xFF26C6DA),
+          const Color(0xFF0097A7),
+        ],
         'onTap': () {
           Navigator.pushNamed(context, AppRoutes.quotation);
         },
@@ -186,41 +211,73 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: actions.map((action) {
           return Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8.0),
             child: Column(
               children: [
-                InkWell(
-                  onTap: action['onTap'] as void Function()?,
-                  borderRadius: BorderRadius.circular(12),
-                  child: Container(
-                    width: 64,
-                    height: 64,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 10,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
+                Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: action['gradient'] as List<Color>,
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
-                    child: Icon(
-                      action['icon'] as IconData?,
-                      color: Theme.of(context).primaryColor,
-                      size: 28,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: (action['gradient'] as List<Color>).first.withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    borderRadius: BorderRadius.circular(16),
+                    child: InkWell(
+                      onTap: action['onTap'] as void Function()?,
+                      borderRadius: BorderRadius.circular(16),
+                      child: Container(
+                        width: 70,
+                        height: 70,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              action['icon'] as IconData,
+                              color: Colors.white,
+                              size: 28,
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              action['label'] as String,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Colors.white,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 Text(
                   action['label'] as String,
-                  style: const TextStyle(fontSize: 12),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ],
             ),

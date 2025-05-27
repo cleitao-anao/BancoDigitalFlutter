@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_application_1/theme/app_theme.dart';
 import '../routes/app_routes.dart';
 import '../services/auth_service.dart';
 
@@ -51,14 +52,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
               );
             },
           ),
-          _buildListTile(
-            context,
-            icon: Icons.color_lens_outlined,
-            title: 'Mudar tema',
-            onTap: () {
-              // Implementar troca de tema
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Alterar tema')),
+          ValueListenableBuilder<ThemeMode>(
+            valueListenable: AppTheme.themeNotifier,
+            builder: (_, themeMode, __) {
+              return SwitchListTile(
+                secondary: const Icon(Icons.dark_mode_outlined),
+                title: const Text('Modo Escuro'),
+                value: themeMode == ThemeMode.dark,
+                onChanged: (value) async {
+                  await AppTheme.toggleTheme();
+                },
               );
             },
           ),

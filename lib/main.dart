@@ -10,6 +10,9 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   try {
+    // Inicializa o tema
+    await AppTheme.init();
+    
     // Inicializa o Supabase
     await SupabaseService().initialize();
     
@@ -46,11 +49,20 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Banco Digital',
-      theme: AppTheme.lightTheme,
-      initialRoute: loginRoute,
-      routes: appRoutes,
+    // Inicializa o tema
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: AppTheme.themeNotifier,
+      builder: (_, themeMode, __) {
+        return MaterialApp(
+          title: 'Banco Digital',
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          themeMode: themeMode,
+          initialRoute: loginRoute,
+          routes: appRoutes,
+          debugShowCheckedModeBanner: false,
+        );
+      },
     );
   }
 }
