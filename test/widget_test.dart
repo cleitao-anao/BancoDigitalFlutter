@@ -11,6 +11,7 @@ import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_application_1/main.dart';
 import 'package:flutter_application_1/services/auth_service.dart';
+import 'package:flutter_application_1/models/user_profile.dart';
 
 class MockAuthService extends AuthService {
   bool _isLoggedIn = false;
@@ -19,8 +20,17 @@ class MockAuthService extends AuthService {
   bool get isLoggedIn => _isLoggedIn;
 
   @override
-  Future<void> login(String email, String password) async {
+  Future<UserProfile> login(String email, String password) async {
     _isLoggedIn = true;
+    final now = DateTime.now();
+    return UserProfile(
+      id: 'mock-user-id',
+      email: email,
+      fullName: 'Test User',
+      phone: null,
+      createdAt: now,
+      updatedAt: now,
+    );
   }
 }
 

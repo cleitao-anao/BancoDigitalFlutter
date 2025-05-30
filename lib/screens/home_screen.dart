@@ -160,18 +160,6 @@ class _HomeScreenState extends State<HomeScreen> {
         },
       },
       {
-        'icon': Icons.swap_horiz,
-        'label': 'Transferir',
-        'color': const Color(0xFF2196F3),
-        'gradient': [
-          const Color(0xFF42A5F5),
-          const Color(0xFF1976D2),
-        ],
-        'onTap': () {
-          Navigator.pushNamed(context, AppRoutes.transfer);
-        },
-      },
-      {
         'icon': Icons.attach_money,
         'label': 'Pagar',
         'color': const Color(0xFF4CAF50),

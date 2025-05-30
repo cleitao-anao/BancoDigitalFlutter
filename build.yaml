@@ -1,0 +1,17 @@
+targets:
+  $default:
+    builders:
+      json_serializable:
+        options:
+          # Configurações para o gerador de código
+          explicit_to_json: true
+          # Outras opções de configuração podem ser adicionadas aqui
+
+builders:
+  json_serializable:
+    import: "package:json_serializable/builder.dart"
+    builder_factories: ["jsonSerializable"]
+    build_extensions: {".dart": [".g.part", ".json_serializable.g.part"]}
+    auto_apply: dependents
+    build_to: source
+    applies_builders: ["source_gen|combining_builder"]
