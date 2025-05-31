@@ -864,6 +864,54 @@ class BankService extends ChangeNotifier {
     }
   }
   
+  // Realiza um investimento
+  Future<void> makeInvestment(double amount) async {
+    if (amount <= 0) {
+      throw ArgumentError('O valor do investimento deve ser maior que zero');
+    }
+
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      throw Exception('Usuário não autenticado');
+    }
+
+    try {
+      // Inicia uma transação
+      await _supabase.rpc('make_investment', params: {
+        'p_user_id': userId,
+        'p_amount': amount,
+      });
+      
+      // Atualiza o cache local
+      _cachedBalance = (_cachedBalance ?? 0) - amount;
+      if (!_balanceController.isClosed) {
+        _balanceController.add(_cachedBalance!);
+      }
+      
+      // Adiciona uma transação de investimento
+      final now = DateTime.now();
+      final transaction = Transaction(
+        id: now.millisecondsSinceEpoch.toString(),
+        senderId: userId,
+        receiverId: 'sistema_investimentos',
+        amount: amount,
+        type: 'investment',
+        status: 'completed',
+        description: 'Aplicação em investimentos',
+        createdAt: now,
+        updatedAt: now,
+      );
+      
+      _addTransactionToCache(transaction);
+      _notifyTransactionsUpdated();
+      
+    } on PostgrestException catch (e) {
+      throw Exception(_parseDatabaseError(e));
+    } catch (e) {
+      throw Exception('Erro ao realizar o investimento: $e');
+    }
+  }
+  
   // Fecha os controladores de stream
   @override
   void dispose() {

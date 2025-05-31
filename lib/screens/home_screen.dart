@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_application_1/theme/app_theme.dart';
-import 'package:flutter_application_1/config/app_routes.dart' show pixHomeRoute, quotationRoute, settingsRoute;
+import 'package:flutter_application_1/config/app_routes.dart' show pixHomeRoute, quotationRoute, settingsRoute, investmentRoute;
 import 'package:flutter_application_1/services/bank_service.dart';
 import 'package:intl/intl.dart';
 
@@ -305,7 +305,7 @@ class _HomeScreenState extends State<HomeScreen> {
           const Color(0xFFF57C00),
         ],
         'onTap': () {
-          // TODO: Navegar para investimentos
+          Navigator.pushNamed(context, investmentRoute);
         },
       },
       {
@@ -475,9 +475,10 @@ class _HomeScreenState extends State<HomeScreen> {
     return BottomNavigationBar(
       currentIndex: currentIndex,
       onTap: (index) {
-        // Handle navigation
         if (index == 1) { // Pix
           Navigator.pushNamed(context, pixHomeRoute);
+        } else if (index == 2) { // Investir
+          Navigator.pushNamed(context, investmentRoute);
         } else if (index == 3) { // Mais
           Navigator.pushNamed(context, settingsRoute);
         } else {
