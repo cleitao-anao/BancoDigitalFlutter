@@ -19,6 +19,7 @@ class _HomeScreenState extends State<HomeScreen> {
   StreamSubscription<double>? _balanceSubscription;
   double _currentBalance = 0.0;
   bool _isLoading = true;
+  bool _isBalanceVisible = true;
 
   @override
   void initState() {
@@ -73,11 +74,49 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // Método para recarregar os dados
+  Future<void> _refreshData() async {
+    setState(() {
+      _isLoading = true;
+    });
+    
+    try {
+      final bankService = context.read<BankService>();
+      final balance = await bankService.getBalance(forceRefresh: true);
+      
+      if (mounted) {
+        setState(() {
+          _currentBalance = balance;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Erro ao recarregar dados: $e');
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Erro ao recarregar os dados. Tente novamente.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Meu Banco'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _isLoading ? null : _refreshData,
+            tooltip: 'Atualizar',
+          ),
+          const SizedBox(width: 8), // Espaçamento adicional
+        ],
       ),
       body: IndexedStack(
         index: _currentIndex,
@@ -161,12 +200,28 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Saldo disponível',
-            style: TextStyle(
-              color: Colors.white70,
-              fontSize: 16,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Saldo disponível',
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 16,
+                ),
+              ),
+              IconButton(
+                icon: Icon(
+                  _isBalanceVisible ? Icons.visibility_off : Icons.visibility,
+                  color: Colors.white70,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _isBalanceVisible = !_isBalanceVisible;
+                  });
+                },
+              ),
+            ],
           ),
           const SizedBox(height: 8),
           _isLoading
@@ -184,15 +239,18 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 )
               : Text(
-                  NumberFormat.currency(
-                    locale: 'pt_BR',
-                    symbol: 'R\$ ',
-                    decimalDigits: 2,
-                  ).format(_currentBalance),
+                  _isBalanceVisible
+                      ? NumberFormat.currency(
+                          locale: 'pt_BR',
+                          symbol: 'R\$ ',
+                          decimalDigits: 2,
+                        ).format(_currentBalance)
+                      : '••••••••',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
+                    letterSpacing: 1.5,
                   ),
                 ),
           const SizedBox(height: 16),

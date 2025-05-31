@@ -86,6 +86,22 @@ class BankService extends ChangeNotifier {
     }
   }
   
+  // Mapeia os tipos de chave para os valores esperados pelo banco de dados
+  String _mapKeyType(String keyType) {
+    switch (keyType) {
+      case 'Telefone':
+        return 'PHONE';
+      case 'CPF':
+        return 'CPF';
+      case 'E-mail':
+        return 'EMAIL';
+      case 'Aleatória':
+        return 'RANDOM';
+      default:
+        throw Exception('Tipo de chave PIX não suportado: $keyType');
+    }
+  }
+
   // Formata o valor da chave de acordo com o tipo
   String _formatKeyValue(String keyType, String keyValue) {
     if (keyType == 'Telefone') {
@@ -107,10 +123,12 @@ class BankService extends ChangeNotifier {
     } else if (keyType == 'E-mail') {
       // Remove espaços em branco extras
       return keyValue.trim().toLowerCase();
+    } else if (keyType == 'Aleatória') {
+      // Retorna a chave aleatória sem formatação
+      return keyValue;
     }
     
-    // Para outros tipos, retorna o valor sem formatação
-    return keyValue;
+    throw Exception('Tipo de chave PIX não suportado: $keyType');
   }
   
   // Adiciona uma nova chave PIX
@@ -142,7 +160,7 @@ class BankService extends ChangeNotifier {
       
       final newKey = {
         'user_id': userId,
-        'key_type': keyType,
+        'key_type': _mapKeyType(keyType), // Usa o tipo mapeado para o formato do banco
         'key_value': formattedKeyValue,
         'is_active': true,
         'created_at': DateTime.now().toIso8601String(),
@@ -397,24 +415,33 @@ class BankService extends ChangeNotifier {
         throw Exception('Saldo insuficiente para realizar a transferência');
       }
 
+      // Formata a chave PIX
+      String formattedPixKey = pixKey.trim();
+      
+      // Se for um número de telefone sem código do país, adiciona o +55
+      if (RegExp(r'^[1-9]{2}9?[0-9]{8}$').hasMatch(formattedPixKey)) {
+        formattedPixKey = '+55$formattedPixKey';
+      }
+      
       // Verifica se a chave PIX é válida
-      if (!_isValidPixKey(pixKey)) {
+      if (!_isValidPixKey(formattedPixKey)) {
         throw ArgumentError('Formato de chave PIX inválido');
       }
 
       // Prepara os dados da transferência
       final transferData = {
         'p_sender_id': userId,
-        'p_pix_key': pixKey.trim(),
+        'p_pix_key': formattedPixKey,
         'p_amount': amount,
         'p_description': description?.trim() ?? 'Transferência PIX',
       };
 
       print('Iniciando transferência PIX:');
       print('- Remetente: $userId');
-      print('- Chave PIX: ${_obfuscatePixKey(pixKey)}');
+      print('- Chave PIX: ${_obfuscatePixKey(formattedPixKey)}');
       print('- Valor: R\$ ${amount.toStringAsFixed(2)}');
       print('- Descrição: ${transferData['p_description']}');
+      print('- Chave formatada: $formattedPixKey');
 
       // Chama a função RPC no Supabase com timeout
       final response;
@@ -729,8 +756,8 @@ class BankService extends ChangeNotifier {
 
   // Verifica se a chave PIX tem um formato válido
   bool _isValidPixKey(String pixKey) {
-    // Remove espaços e caracteres especiais
-    final cleanKey = pixKey.replaceAll(RegExp(r'[^a-zA-Z0-9@.]'), '');
+    // Remove espaços e caracteres especiais, exceto o + no início
+    final cleanKey = pixKey.replaceAll(RegExp(r'[^a-zA-Z0-9@.+]'), '');
     
     // Verifica se é um CPF (apenas dígitos, 11 caracteres)
     if (RegExp(r'^\d{11}$').hasMatch(cleanKey)) {
@@ -742,14 +769,19 @@ class BankService extends ChangeNotifier {
       return true;
     }
     
-    // Verifica se é um telefone (com DDD, incluindo 9º dígito)
+    // Verifica se é um telefone no formato internacional (+55DD9XXXXXXXX)
+    if (RegExp(r'^\+[1-9]\d{1,3}\d{10,14}$').hasMatch(cleanKey)) {
+      return true;
+    }
+    
+    // Verifica se é um telefone nacional (com DDD, incluindo 9º dígito)
     if (RegExp(r'^[1-9]{2}9?[0-9]{8}$').hasMatch(cleanKey)) {
       return true;
     }
     
     // Verifica se é uma chave aleatória (UUID)
     if (RegExp(r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$')
-        .hasMatch(cleanKey)) {
+        .hasMatch(pixKey)) {  // Usa pixKey original para UUID
       return true;
     }
     
