@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import 'package:flutter_application_1/services/bank_service.dart';
+import 'package:flutter_application_1/models/pix_key.dart';
 import 'package:flutter_application_1/widgets/custom_text_field.dart';
 
 class AddPixKeyScreen extends StatefulWidget {
@@ -14,6 +17,7 @@ class _AddPixKeyScreenState extends State<AddPixKeyScreen> {
   final _keyValueController = TextEditingController();
   String _selectedKeyType = 'CPF';
   bool _isLoading = false;
+  String? _currentKeyId; // Armazena o ID da chave atual para rotação
 
   final List<String> _keyTypes = [
     'CPF',
@@ -34,11 +38,24 @@ class _AddPixKeyScreenState extends State<AddPixKeyScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // TODO: Implementar salvamento da chave no backend
-      await Future.delayed(const Duration(seconds: 1));
+      final bankService = Provider.of<BankService>(context, listen: false);
+      
+      if (_currentKeyId != null) {
+        // Se já existe um ID de chave, estamos atualizando uma chave existente
+        await bankService.rotatePixKey(_currentKeyId!);
+      } else {
+        // Caso contrário, estamos criando uma nova chave
+        await bankService.addPixKey(_selectedKeyType, _keyValueController.text);
+      }
       
       if (mounted) {
         Navigator.pop(context, true);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Chave PIX atualizada com sucesso!'),
+            backgroundColor: Colors.green,
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -56,11 +73,26 @@ class _AddPixKeyScreenState extends State<AddPixKeyScreen> {
     }
   }
 
+  // Construtor para permitir a edição de uma chave existente
+  _AddPixKeyScreenState({PixKey? existingKey}) : _existingKey = existingKey;
+  final PixKey? _existingKey;
+
+  @override
+  void initState() {
+    super.initState();
+    // Se estiver editando uma chave existente, preenche os campos
+    if (_existingKey != null) {
+      _currentKeyId = _existingKey.id;
+      _selectedKeyType = _existingKey.keyType;
+      _keyValueController.text = _existingKey.keyValue;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Adicionar Chave PIX'),
+        title: Text(_existingKey != null ? 'Editar Chave PIX' : 'Adicionar Chave PIX'),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -108,27 +140,48 @@ class _AddPixKeyScreenState extends State<AddPixKeyScreen> {
               const SizedBox(height: 24),
               _buildKeyInput(),
               const SizedBox(height: 32),
-              ElevatedButton(
-                onPressed: _isLoading ? null : _saveKey,
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: _isLoading
-                    ? const SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2,
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (_existingKey != null && _existingKey.keyType == 'Chave Aleatória')
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 16.0),
+                      child: OutlinedButton.icon(
+                        onPressed: _isLoading ? null : () => _showRotateKeyDialog(context),
+                        icon: const Icon(Icons.refresh, size: 20),
+                        label: const Text('Rotacionar Chave'),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          side: BorderSide(color: Theme.of(context).colorScheme.primary),
                         ),
-                      )
-                    : const Text(
-                        'Salvar Chave',
-                        style: TextStyle(fontSize: 16),
                       ),
+                    ),
+                  ElevatedButton(
+                    onPressed: _isLoading ? null : _saveKey,
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: _isLoading
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : Text(
+                            _existingKey != null ? 'Atualizar Chave' : 'Salvar Chave',
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -251,6 +304,32 @@ class _AddPixKeyScreenState extends State<AddPixKeyScreen> {
     setState(() {
       _keyValueController.text = random;
     });
+  }
+  
+  Future<void> _showRotateKeyDialog(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Rotacionar Chave PIX'),
+        content: const Text(
+          'Deseja realmente gerar uma nova chave aleatória? A chave atual será desativada e não poderá mais ser usada para receber transferências.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Confirmar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      _generateRandomKey();
+    }
   }
 }
 

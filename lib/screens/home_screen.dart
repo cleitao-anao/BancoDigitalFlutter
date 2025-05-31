@@ -1,6 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:flutter_application_1/theme/app_theme.dart';
-import 'package:flutter_application_1/routes/app_routes.dart';
+import 'package:flutter_application_1/config/app_routes.dart' show pixHomeRoute, settingsRoute, quotationRoute;
+import 'package:flutter_application_1/services/bank_service.dart';
+import 'package:intl/intl.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -11,6 +16,62 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
+  StreamSubscription<double>? _balanceSubscription;
+  double _currentBalance = 0.0;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _setupBalanceListener();
+  }
+
+  @override
+  void dispose() {
+    _balanceSubscription?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _setupBalanceListener() async {
+    final bankService = context.read<BankService>();
+    
+    // Carrega o saldo inicial
+    try {
+      final balance = await bankService.getBalance(forceRefresh: true);
+      if (mounted) {
+        setState(() {
+          _currentBalance = balance;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Erro ao carregar saldo: $e');
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+      return; // Sai da função em caso de erro
+    }
+    
+    // Escuta por atualizações no saldo
+    _balanceSubscription?.cancel(); // Cancela assinatura anterior se existir
+    _balanceSubscription = bankService.balanceStream.listen(
+      (balance) {
+        if (mounted) {
+          setState(() {
+            _currentBalance = balance;
+            _isLoading = false;
+          });
+        }
+      },
+      onError: (error) {
+        debugPrint('Erro no stream de saldo: $error');
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
+      },
+      cancelOnError: true,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -108,14 +169,32 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'R\$ 12.456,78',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 32,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+          _isLoading
+              ? const SizedBox(
+                  height: 40,
+                  child: Center(
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white70),
+                      ),
+                    ),
+                  ),
+                )
+              : Text(
+                  NumberFormat.currency(
+                    locale: 'pt_BR',
+                    symbol: 'R\$ ',
+                    decimalDigits: 2,
+                  ).format(_currentBalance),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
           const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -156,7 +235,7 @@ class _HomeScreenState extends State<HomeScreen> {
           const Color(0xFF7B1FA2),
         ],
         'onTap': () {
-          // TODO: Navegar para tela do Pix
+          Navigator.pushNamed(context, pixHomeRoute);
         },
       },
       {
@@ -192,7 +271,7 @@ class _HomeScreenState extends State<HomeScreen> {
           const Color(0xFF0097A7),
         ],
         'onTap': () {
-          Navigator.pushNamed(context, AppRoutes.quotation);
+          Navigator.pushNamed(context, quotationRoute);
         },
       },
     ];
@@ -333,8 +412,8 @@ class _HomeScreenState extends State<HomeScreen> {
             transaction['amount'] as String,
             style: TextStyle(
               color: transaction['isPositive'] as bool
-                  ? AppTheme.successColor
-                  : AppTheme.errorColor,
+                  ? AppTheme.kSuccessColor
+                  : AppTheme.kErrorColor,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -382,9 +461,12 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ],
       onTap: (index) {
-        if (index == 4) {
+        if (index == 2) {
+          // Navegar para a tela do PIX
+          Navigator.pushNamed(context, pixHomeRoute);
+        } else if (index == 4) {
           // Navegar para a tela de configurações
-          Navigator.pushNamed(context, AppRoutes.settings);
+          Navigator.pushNamed(context, settingsRoute);
         } else {
           setState(() {
             _currentIndex = index;

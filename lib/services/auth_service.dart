@@ -86,14 +86,14 @@ class AuthService {
         'updated_at': now.toIso8601String(),
       });
       
-      // 3. Cria a conta corrente do usuário
+      // 3. Cria a conta corrente do usuário com saldo inicial de R$ 1.000,00
       final accountNumber = _generateAccountNumber();
       await _supabase.from(config.SupabaseConfig.accountsTable).insert({
         'user_id': userId,
         'account_number': accountNumber,
         'branch': '0001',
         'account_type': 'CHECKING',
-        'balance': 0.0,
+        'balance': 1000.0, // Saldo inicial de R$ 1.000,00
         'status': 'ACTIVE',
         'created_at': now.toIso8601String(),
         'updated_at': now.toIso8601String(),

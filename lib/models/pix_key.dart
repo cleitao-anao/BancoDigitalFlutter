@@ -4,12 +4,25 @@ part 'pix_key.g.dart';
 
 @JsonSerializable()
 class PixKey {
+  @JsonKey(name: 'id')
   final String id;
+  
+  @JsonKey(name: 'user_id')
   final String userId;
+  
+  @JsonKey(name: 'key_type')
   final String keyType; // CPF, Email, Telefone, Chave Aleatória
+  
+  @JsonKey(name: 'key_value')
   final String keyValue;
+  
+  @JsonKey(name: 'is_active')
   final bool isActive;
+  
+  @JsonKey(name: 'created_at')
   final DateTime createdAt;
+  
+  @JsonKey(name: 'updated_at')
   final DateTime updatedAt;
 
   PixKey({

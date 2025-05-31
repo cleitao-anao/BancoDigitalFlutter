@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_application_1/services/bank_service.dart';
 import 'package:flutter_application_1/widgets/custom_text_field.dart';
-import 'package:provider/provider.dart';
 
 class PixTransferScreen extends StatefulWidget {
   const PixTransferScreen({Key? key}) : super(key: key);
@@ -35,7 +34,7 @@ class _PixTransferScreenState extends State<PixTransferScreen> {
     try {
       final amount = double.parse(_amountController.text);
       
-      final result = await _bankService.makePixTransfer(
+      await _bankService.makePixTransfer(
         pixKey: _pixKeyController.text.trim(),
         amount: amount,
         description: _descriptionController.text.trim(),

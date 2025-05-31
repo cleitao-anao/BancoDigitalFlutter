@@ -99,7 +99,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     padding: const EdgeInsets.only(bottom: 16.0),
                     child: Text(
                       _errorMessage!,
-                      style: const TextStyle(color: AppTheme.errorColor),
+                      style: TextStyle(color: AppTheme.kErrorColor),
                       textAlign: TextAlign.center,
                     ),
                   ),

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_application_1/theme/app_theme.dart';
-import '../routes/app_routes.dart';
+import 'package:flutter_application_1/config/app_routes.dart' show loginRoute;
 import '../services/auth_service.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -20,7 +20,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       if (mounted) {
         Navigator.pushNamedAndRemoveUntil(
           context, 
-          AppRoutes.login, 
+          loginRoute, 
           (route) => false,
         );
       }

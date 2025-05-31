@@ -1,6 +1,9 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:flutter_application_1/models/pix_key.dart';
 import 'package:flutter_application_1/screens/pix/add_pix_key_screen.dart';
+import 'package:flutter_application_1/services/bank_service.dart';
 
 class PixKeysScreen extends StatefulWidget {
   const PixKeysScreen({Key? key}) : super(key: key);
@@ -10,24 +13,62 @@ class PixKeysScreen extends StatefulWidget {
 }
 
 class _PixKeysScreenState extends State<PixKeysScreen> {
-  // TODO: Substituir por chamada ao serviço
-  List<PixKey> _pixKeys = [];
+  final List<PixKey> _pixKeys = [];
   bool _isLoading = true;
+  StreamSubscription? _pixKeysSubscription;
 
   @override
   void initState() {
     super.initState();
+    _setupPixKeysListener();
+  }
+
+  @override
+  void dispose() {
+    _pixKeysSubscription?.cancel();
+    super.dispose();
+  }
+
+  void _setupPixKeysListener() {
+    final bankService = context.read<BankService>();
+    
+    // Carrega as chaves iniciais
     _loadPixKeys();
+    
+    // Escuta por atualizações nas chaves
+    _pixKeysSubscription = bankService.pixKeysStream.listen((pixKeys) {
+      if (mounted) {
+        setState(() {
+          _pixKeys.clear();
+          _pixKeys.addAll(pixKeys);
+          _isLoading = false;
+        });
+      }
+    }, onError: (error) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        _showError('Erro ao carregar chaves: $error');
+      }
+    });
   }
 
   Future<void> _loadPixKeys() async {
+    if (!mounted) return;
+    
     setState(() => _isLoading = true);
-    // TODO: Implementar carregamento das chaves do backend
-    await Future.delayed(const Duration(seconds: 1));
-    setState(() {
-      _pixKeys = [];
-      _isLoading = false;
-    });
+    
+    try {
+      final bankService = context.read<BankService>();
+      await bankService.getPixKeys(forceRefresh: true);
+    } catch (e) {
+      if (mounted) {
+        _showError('Erro ao carregar chaves: $e');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   Future<void> _addPixKey() async {
@@ -47,7 +88,7 @@ class _PixKeysScreenState extends State<PixKeysScreen> {
       builder: (context) => AlertDialog(
         title: const Text('Remover chave PIX'),
         content: Text(
-            'Tem certeza que deseja remover a chave ${key.keyValue}?'),
+            'Tem certeza que deseja remover a chave ${key.keyValue}?\n\nEsta ação irá desativar a chave e ela não poderá mais ser usada para receber transferências.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -62,8 +103,23 @@ class _PixKeysScreenState extends State<PixKeysScreen> {
     );
 
     if (confirmed == true) {
-      // TODO: Implementar remoção da chave no backend
-      await _loadPixKeys();
+      try {
+        final bankService = context.read<BankService>();
+        await bankService.deactivatePixKey(key.id);
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Chave PIX removida com sucesso!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          _showError('Erro ao remover chave: $e');
+        }
+      }
     }
   }
 
@@ -129,32 +185,145 @@ class _PixKeysScreenState extends State<PixKeysScreen> {
             leading: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Theme.of(context).primaryColor.withOpacity(0.1),
+                color: key.isActive 
+                    ? Theme.of(context).primaryColor.withOpacity(0.1)
+                    : Colors.grey[300],
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 Icons.vpn_key_rounded,
-                color: Theme.of(context).primaryColor,
+                color: key.isActive 
+                    ? Theme.of(context).primaryColor
+                    : Colors.grey[600],
               ),
             ),
             title: Text(
-              key.keyValue,
-              style: const TextStyle(fontWeight: FontWeight.w500),
+              context.read<BankService>().formatKeyForDisplay(key.keyType, key.keyValue),
+              style: TextStyle(
+                fontWeight: FontWeight.w500,
+                color: key.isActive ? null : Colors.grey[600],
+              ),
             ),
             subtitle: Text(
               'Tipo: ${key.keyType} • ${key.isActive ? 'Ativa' : 'Inativa'}' ,
-              style: TextStyle(color: Colors.grey[600]),
+              style: TextStyle(color: key.isActive ? Colors.grey[600] : Colors.grey[400]),
             ),
-            trailing: IconButton(
-              icon: const Icon(Icons.delete_outline_rounded, color: Colors.red),
-              onPressed: () => _removePixKey(key),
+            trailing: PopupMenuButton<String>(
+              icon: const Icon(Icons.more_vert_rounded),
+              onSelected: (value) {
+                if (value == 'delete') {
+                  _removePixKey(key);
+                } else if (value == 'edit' && key.keyType == 'Chave Aleatória') {
+                  _editPixKey(key);
+                }
+              },
+              itemBuilder: (context) => [
+                if (key.keyType == 'Chave Aleatória')
+                  const PopupMenuItem(
+                    value: 'edit',
+                    child: Text('Rotacionar Chave'),
+                  ),
+                const PopupMenuItem(
+                  value: 'delete',
+                  child: Text('Remover', style: TextStyle(color: Colors.red)),
+                ),
+              ],
             ),
             onTap: () {
-              // TODO: Mostrar detalhes da chave
+              // Mostrar detalhes da chave
+              _showKeyDetails(key);
             },
           ),
         );
       },
+    );
+  }
+  
+  void _showKeyDetails(PixKey key) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Detalhes da Chave PIX',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            _buildDetailRow('Tipo', key.keyType),
+            _buildDetailRow('Valor', key.keyValue, keyType: key.keyType),
+            _buildDetailRow('Status', key.isActive ? 'Ativa' : 'Inativa'),
+            _buildDetailRow('Criada em', 
+              '${key.createdAt.day.toString().padLeft(2, '0')}/'
+              '${key.createdAt.month.toString().padLeft(2, '0')}/'
+              '${key.createdAt.year}'
+            ),
+            const SizedBox(height: 16),
+            if (key.keyType == 'Chave Aleatória' && key.isActive)
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    _editPixKey(key);
+                  },
+                  child: const Text('Rotacionar Chave'),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildDetailRow(String label, String value, {String? keyType}) {
+    final displayValue = keyType != null
+        ? context.read<BankService>().formatKeyForDisplay(keyType, value)
+        : value;
+        
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '$label: ',
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
+          Expanded(
+            child: Text(
+              displayValue,
+              style: const TextStyle(fontSize: 16),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Future<void> _editPixKey(PixKey key) async {
+    final result = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AddPixKeyScreen(),
+        settings: RouteSettings(arguments: key),
+      ),
+    );
+
+    if (result == true && mounted) {
+      await _loadPixKeys();
+    }
+  }
+  
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+      ),
     );
   }
 }

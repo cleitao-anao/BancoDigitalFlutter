@@ -4,6 +4,7 @@ import 'package:flutter_application_1/theme/app_theme.dart';
 import 'package:flutter_application_1/config/app_routes.dart';
 import 'package:flutter_application_1/services/auth_service.dart';
 import 'package:flutter_application_1/services/supabase_service.dart';
+import 'package:flutter_application_1/services/bank_service.dart';
 import 'package:http/http.dart' as http;
 
 void main() async {
@@ -32,6 +33,9 @@ void main() async {
           // Adiciona o SupabaseService como um provider
           provider_package.Provider<SupabaseService>(
             create: (_) => SupabaseService(),
+          ),
+          provider_package.ChangeNotifierProvider<BankService>(
+            create: (_) => BankService(),
           ),
         ],
         child: MyApp(),
