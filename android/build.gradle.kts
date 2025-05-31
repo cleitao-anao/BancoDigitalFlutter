@@ -22,7 +22,7 @@ tasks.register<Delete>("clean") {
 }
 
 buildscript {
-    ext.kotlin_version = '1.9.0'
+    val kotlin_version = "1.9.0"
     repositories {
         google()
         mavenCentral()
