@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_application_1/theme/app_theme.dart';
-import 'package:flutter_application_1/config/app_routes.dart' show pixHomeRoute, settingsRoute, quotationRoute;
+import 'package:flutter_application_1/config/app_routes.dart' show pixHomeRoute, quotationRoute, settingsRoute;
 import 'package:flutter_application_1/services/bank_service.dart';
 import 'package:intl/intl.dart';
 
@@ -297,18 +297,6 @@ class _HomeScreenState extends State<HomeScreen> {
         },
       },
       {
-        'icon': Icons.attach_money,
-        'label': 'Pagar',
-        'color': const Color(0xFF4CAF50),
-        'gradient': [
-          const Color(0xFF66BB6A),
-          const Color(0xFF388E3C),
-        ],
-        'onTap': () {
-          // TODO: Navegar para tela de pagamento
-        },
-      },
-      {
         'icon': Icons.bar_chart,
         'label': 'Investir',
         'color': const Color(0xFFFF9800),
@@ -486,6 +474,18 @@ class _HomeScreenState extends State<HomeScreen> {
   BottomNavigationBar _buildBottomNavigationBar(BuildContext context, int currentIndex) {
     return BottomNavigationBar(
       currentIndex: currentIndex,
+      onTap: (index) {
+        // Handle navigation
+        if (index == 1) { // Pix
+          Navigator.pushNamed(context, pixHomeRoute);
+        } else if (index == 3) { // Mais
+          Navigator.pushNamed(context, settingsRoute);
+        } else {
+          setState(() {
+            _currentIndex = index;
+          });
+        }
+      },
       type: BottomNavigationBarType.fixed,
       selectedItemColor: Theme.of(context).primaryColor,
       unselectedItemColor: Colors.grey,
@@ -498,18 +498,13 @@ class _HomeScreenState extends State<HomeScreen> {
           label: 'Início',
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.credit_card_outlined),
-          activeIcon: Icon(Icons.credit_card),
-          label: 'Cartões',
-        ),
-        BottomNavigationBarItem(
           icon: Icon(Icons.pix_outlined),
           activeIcon: Icon(Icons.pix),
           label: 'Pix',
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.query_stats_outlined),
-          activeIcon: Icon(Icons.query_stats),
+          icon: Icon(Icons.bar_chart_outlined),
+          activeIcon: Icon(Icons.bar_chart),
           label: 'Investir',
         ),
         BottomNavigationBarItem(
@@ -518,19 +513,6 @@ class _HomeScreenState extends State<HomeScreen> {
           label: 'Mais',
         ),
       ],
-      onTap: (index) {
-        if (index == 2) {
-          // Navegar para a tela do PIX
-          Navigator.pushNamed(context, pixHomeRoute);
-        } else if (index == 4) {
-          // Navegar para a tela de configurações
-          Navigator.pushNamed(context, settingsRoute);
-        } else {
-          setState(() {
-            _currentIndex = index;
-          });
-        }
-      },
     );
   }
 }
