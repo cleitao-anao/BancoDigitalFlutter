@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_application_1/services/auth_service.dart';
 import 'package:flutter_application_1/theme/app_theme.dart';
-import 'package:flutter_application_1/widgets/supabase_test_widget.dart';
 import 'package:flutter_application_1/screens/signup_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -185,9 +184,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 
                 const SizedBox(height: 20),
-                // Widget de teste do Supabase
-                const SupabaseTestWidget(),
-                
                 // Register
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,

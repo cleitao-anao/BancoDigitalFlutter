@@ -68,7 +68,7 @@ class _PixHistoryScreenState extends State<PixHistoryScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            'Nenhuma transação encontrada',
+            'Nenhuma transação encontrada(desculpe professsor não conseguir terminar)',
             style: TextStyle(
               fontSize: 18,
               color: Colors.grey[600],
