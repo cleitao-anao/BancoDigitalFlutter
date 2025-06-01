@@ -5,7 +5,7 @@
     
     <application
         android:usesCleartextTraffic="true"
-        android:label="flutter_application_1"
+        android:label="Banco Digital"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

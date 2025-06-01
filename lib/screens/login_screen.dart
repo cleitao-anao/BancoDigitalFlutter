@@ -75,7 +75,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 60),
                 // Logo
                 Icon(
-                  Icons.account_balance,
+                  Icons.diamond,
                   size: 100,
                   color: Theme.of(context).primaryColor,
                 ),
